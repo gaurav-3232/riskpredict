@@ -1,11 +1,9 @@
 services:
-  # ── Backend API ──
   - type: web
     name: riskpredict-api
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    dockerTarget: production
     region: oregon
     plan: free
     envVars:
@@ -28,7 +26,6 @@ services:
     healthCheckPath: /health
     startCommand: "sh -c 'mkdir -p /tmp/storage/models /tmp/storage/datasets && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2'"
 
-  # ── Frontend ──
   - type: web
     name: riskpredict-web
     runtime: static
