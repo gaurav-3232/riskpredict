@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a2035;
+  --border: #1e293b;
+  --accent: #338dfc;
+}
+
+body {
+  background: var(--bg-primary);
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-[#111827]/80 backdrop-blur-sm border border-slate-800/60 rounded-xl;
+  }
+  .glow-sm {
+    box-shadow: 0 0 15px -3px rgba(51, 141, 252, 0.15);
+  }
+}

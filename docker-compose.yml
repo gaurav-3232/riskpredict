@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-riskpredict}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-riskpredict_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-riskpredict}
+    ports:
+      - "${POSTGRES_PORT:-5435}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-riskpredict}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "${BACKEND_PORT:-8001}:8000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-riskpredict}:${POSTGRES_PASSWORD:-riskpredict_secret}@postgres:5432/${POSTGRES_DB:-riskpredict}
+      MODELS_DIR: /app/storage/models
+      DATASETS_DIR: /app/storage/datasets
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:${FRONTEND_PORT:-5173}"]'
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENVIRONMENT: development
+    volumes:
+      - ./backend:/app
+      - storage_data:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  storage_data:
