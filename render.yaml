@@ -1,6 +1,3 @@
-# Render Blueprint — render.yaml
-# Deploy with: https://render.com/deploy
-
 services:
   # ── Backend API ──
   - type: web
@@ -10,16 +7,16 @@ services:
     dockerContext: ./backend
     dockerTarget: production
     region: oregon
-    plan: starter
+    plan: free
     envVars:
       - key: DATABASE_URL
         fromDatabase:
           name: riskpredict-db
           property: connectionString
       - key: MODELS_DIR
-        value: /app/storage/models
+        value: /tmp/storage/models
       - key: DATASETS_DIR
-        value: /app/storage/datasets
+        value: /tmp/storage/datasets
       - key: CORS_ORIGINS
         value: '["https://riskpredict-web.onrender.com"]'
       - key: LOG_LEVEL
@@ -28,13 +25,8 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
-    disk:
-      name: model-storage
-      mountPath: /app/storage
-      sizeGB: 1
     healthCheckPath: /health
-    buildCommand: ""
-    startCommand: "sh -c 'alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2'"
+    startCommand: "sh -c 'mkdir -p /tmp/storage/models /tmp/storage/datasets && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2'"
 
   # ── Frontend ──
   - type: web
@@ -56,6 +48,6 @@ services:
 
 databases:
   - name: riskpredict-db
-    plan: starter
+    plan: free
     databaseName: riskpredict
     region: oregon
