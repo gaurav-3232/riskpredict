@@ -55,17 +55,17 @@ docker-compose -f docker-compose.prod.yml up --build -d
 
 ## API Endpoints
 
-| Method | Endpoint              | Description              |
-|--------|-----------------------|--------------------------|
-| GET    | `/health`             | Service health + DB status |
-| GET    | `/metrics`            | Platform statistics      |
-| POST   | `/datasets/upload`    | Upload CSV dataset       |
-| GET    | `/datasets`           | List all datasets        |
-| GET    | `/datasets/{id}`      | Get dataset details      |
-| POST   | `/experiments/train`  | Train a new model        |
-| GET    | `/experiments`        | List all experiments     |
-| GET    | `/experiments/{id}`   | Get experiment details   |
-| POST   | `/predict`            | Make a prediction        |
+| Method | Endpoint             | Description                |
+| ------ | -------------------- | -------------------------- |
+| GET    | `/health`            | Service health + DB status |
+| GET    | `/metrics`           | Platform statistics        |
+| POST   | `/datasets/upload`   | Upload CSV dataset         |
+| GET    | `/datasets`          | List all datasets          |
+| GET    | `/datasets/{id}`     | Get dataset details        |
+| POST   | `/experiments/train` | Train a new model          |
+| GET    | `/experiments`       | List all experiments       |
+| GET    | `/experiments/{id}`  | Get experiment details     |
+| POST   | `/predict`           | Make a prediction          |
 
 ### Example API Requests
 
@@ -208,26 +208,28 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ## Environment Variables
 
-| Variable         | Required | Default                  | Description                          |
-|------------------|----------|--------------------------|--------------------------------------|
-| `DATABASE_URL`   | Yes      | (local postgres)         | PostgreSQL connection string         |
-| `MODELS_DIR`     | No       | `/app/storage/models`    | Path to store trained models         |
-| `DATASETS_DIR`   | No       | `/app/storage/datasets`  | Path to store uploaded CSVs          |
-| `CORS_ORIGINS`   | No       | `["http://localhost:5173"]` | Allowed CORS origins (JSON array) |
-| `LOG_LEVEL`      | No       | `INFO`                   | DEBUG, INFO, WARNING, ERROR          |
-| `ENVIRONMENT`    | No       | `development`            | `development` or `production`        |
-| `JWT_SECRET`     | No       | —                        | Reserved for future auth             |
+| Variable       | Required | Default                     | Description                       |
+| -------------- | -------- | --------------------------- | --------------------------------- |
+| `DATABASE_URL` | Yes      | (local postgres)            | PostgreSQL connection string      |
+| `MODELS_DIR`   | No       | `/app/storage/models`       | Path to store trained models      |
+| `DATASETS_DIR` | No       | `/app/storage/datasets`     | Path to store uploaded CSVs       |
+| `CORS_ORIGINS` | No       | `["http://localhost:5173"]` | Allowed CORS origins (JSON array) |
+| `LOG_LEVEL`    | No       | `INFO`                      | DEBUG, INFO, WARNING, ERROR       |
+| `ENVIRONMENT`  | No       | `development`               | `development` or `production`     |
+| `JWT_SECRET`   | No       | —                           | Reserved for future auth          |
 
 ---
 
 ## Docker Images
 
 ### Backend (multi-stage)
+
 - **builder** — installs gcc + pip deps
 - **production** — lean runtime with non-root user, health check, 2 workers
 - **development** — adds reload + debugpy
 
 ### Frontend (multi-stage)
+
 - **builder** — runs `npm run build`
 - **production** — serves via nginx with gzip, caching, SPA routing
 - **development** — Vite dev server with HMR
@@ -245,3 +247,9 @@ cd backend
 pip install -r requirements.txt
 DATABASE_URL=sqlite:///./test.db pytest tests/ -v
 ```
+
+## Performance
+
+Load tested with [Locust](https://locust.io/) — sustained 75 RPS at 300 concurrent users
+with 0% failures after identifying and fixing a per-request model deserialization
+bottleneck. See [LOAD_TESTING.md](./LOAD_TESTING.md) for the full methodology and results.

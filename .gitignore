@@ -29,3 +29,20 @@ storage/
 # OS
 .DS_Store
 Thumbs.db
+
+# Python virtual environments
+venv/
+.venv/
+*.egg-info/
+__pycache__/
+*.pyc
+
+# Accidentally created during venv setup
+backend/#/
+backend/3.12/
+backend/explicitly/
+backend/use/
+
+# Environment files
+.env
+.env.local
