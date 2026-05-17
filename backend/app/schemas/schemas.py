@@ -10,7 +10,7 @@ class DatasetResponse(BaseModel):
     file_path: str
     num_rows: Optional[int] = None
     num_columns: Optional[int] = None
-    columns_info: Optional[dict] = None
+    columns_info: Optional[list] = None
     created_at: datetime
 
     class Config:

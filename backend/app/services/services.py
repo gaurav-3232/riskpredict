@@ -36,7 +36,7 @@ class DatasetService:
             file_path=file_path,
             num_rows=len(df),
             num_columns=len(df.columns),
-            columns=list(df.columns),
+            columns_info=list(df.columns),
         )
         db.add(dataset)
         db.commit()
@@ -44,19 +44,16 @@ class DatasetService:
         logger.info("dataset_uploaded", id=dataset.id, name=filename, rows=len(df))
         return dataset
 
-
-class ExperimentService:
     @staticmethod
     def get_all(db: Session):
-        return (
-            db.query(Experiment)
-            .order_by(Experiment.id.desc())
-            .all()
-        )
+        return db.query(Dataset).order_by(Dataset.id.desc()).all()
 
     @staticmethod
-    def get_by_id(db: Session, experiment_id: int):
-        return db.query(Experiment).filter(Experiment.id == experiment_id).first()
+    def get_by_id(db: Session, dataset_id: int):
+        return db.query(Dataset).filter(Dataset.id == dataset_id).first()
+
+
+class ExperimentService:
     @staticmethod
     def train_model(
         db: Session,
@@ -86,16 +83,18 @@ class ExperimentService:
                 settings.models_dir,
                 f"model_{experiment.id}_{model_type}.joblib",
             )
-            artifact, metrics = MLPipeline.train(
-                file_path=dataset.file_path,
-                target_column=target_column,
-                model_type=model_type,
-                test_size=test_size,
-            )
-            MLPipeline.save_model(artifact, model_path)
+
+            # MLPipeline is instance-based — create an instance and call methods on it
+            pipeline = MLPipeline()
+            df = pipeline.load_data(dataset.file_path)
+            X_train, X_test, y_train, y_test = pipeline.prepare_data(df, target_column, test_size)
+            pipeline.train(model_type, X_train, y_train)
+            metrics = pipeline.evaluate(X_test, y_test)
+            pipeline.save_model(model_path)
 
             experiment.model_path = model_path
-            experiment.feature_columns = artifact["feature_columns"]
+            experiment.feature_columns = pipeline.feature_columns
+            experiment.feature_stats = pipeline.feature_stats
             experiment.metrics_json = metrics
             experiment.status = "completed"
             db.commit()
@@ -108,6 +107,14 @@ class ExperimentService:
             logger.error("experiment_failed", id=experiment.id, error=str(e))
 
         return experiment
+
+    @staticmethod
+    def get_all(db: Session):
+        return db.query(Experiment).order_by(Experiment.id.desc()).all()
+
+    @staticmethod
+    def get_by_id(db: Session, experiment_id: int):
+        return db.query(Experiment).filter(Experiment.id == experiment_id).first()
 
 
 class PredictionService:
